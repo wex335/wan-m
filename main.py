@@ -40,9 +40,9 @@ chats = chats()
 def prmess(message,messconv:curses.window):
     d = messconv.getparyx()
     if(message.from_id==me.id):
-        messconv.addstr(f' {message.text}\n')
+        messconv.addstr(f'{message.text}\n')
     elif(message.from_id>0):
-        messconv.addstr(" "+getname(message.from_id)+f": {message.text}\n")
+        messconv.addstr(getname(message.from_id)+f": {message.text}\n")
     messconv.refresh()
 
 
@@ -63,6 +63,9 @@ def main(conv:curses.window):
 
     chatconv = curses.newwin(hid,22,1,1)
     chatconv.border()
+    bord = curses.newwin(hid,wid-23,1,23)
+    bord.border()
+    bord.refresh()
     for chat in range(len(chats)):
         chats[chat] = dd(chats[chat])
         if chats[chat].conversation['peer']['id']<2000000000:
@@ -71,7 +74,7 @@ def main(conv:curses.window):
             chatconv.addstr(chat+1,1,(chats[chat].conversation['chat_settings']['title'])[:20])
     chatconv.refresh()
 
-    messconv = curses.newwin(4,wid-23,1,23)
+    messconv = curses.newwin(hid-4,wid-25,4,24)
     messconv.refresh()
     lp.start(printupdate,messconv)
 
