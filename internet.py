@@ -13,8 +13,8 @@ class Session():
             return json.loads(response)['response']
         return response
 
-    def userget(self,id:int=None):
-        return self.method('users.get',{'user_ids':id})[0]
+    def userget(self,id:int=None,fields=None):
+        return self.method('users.get',{'user_ids':id,'fields':fields})[0]
 
     def groupget(self,id:int=None):
         return self.method('groups.getById',{'group_ids':-id})[0]
