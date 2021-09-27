@@ -36,15 +36,15 @@ def chats():
     return res[0:hid-5]
 
 converstations = []
-ind = 8
+ind = 15
 chats = chats()
 def getname(id)->str:
     if id>0:
         user = dd(s.userget(id))
         return f"{user.first_name} {user.last_name}"
     if id<0:
-        user = dd(s.groupget(id))
-        return f"{user.name}"
+        user = s.groupget(id)
+        return f"{user['name']}"
 
 
 
@@ -86,9 +86,9 @@ def main(conv:curses.window):
                 if(user.online_info['is_online']):
                     adv+="Онлайн"
                 elif('last_seen' in user.online_info):
-                    mins = datetime.now().timestamp()-int(user.online_info['last_seen'])//60
+                    mins = round((datetime.now().timestamp()-int(user.online_info['last_seen']))//60)
                     if(mins>100):
-                        hours = mins//60
+                        hours = round(mins//60)
                         if(hours>24):
                             adv+=f"{hours//24} дней назад"
                         else: adv+=f"{hours} часов назад"
