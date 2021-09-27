@@ -1,5 +1,9 @@
 import requests,json
 
+
+def log(text):
+    open('a.log','a').write(f"\n{text}")
+
 class Session():
     def __init__(self,token,version=5.131):
         self.version = version
@@ -8,7 +12,8 @@ class Session():
     def method(self,mname,params:dict={}):
         params.setdefault('access_token',[]).append(self.token)
         params.setdefault('v',[]).append(self.version)
-        response = requests.get(f"https://api.vk.com/method/{mname}",params).content.decode('utf-8')
+        response = requests.get(f"https://api.vk.com/method/{mname}",params,timeout=10).content.decode('utf-8')
+        log(response)
         if 'response' in response:
             return json.loads(response)['response']
         return response

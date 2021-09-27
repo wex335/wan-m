@@ -2,12 +2,21 @@ from iop import *
 from consoleManager import Console
 from lp import *
 from internet import *
-import curses,json
+import curses,json,sys,os
 
-token = json.loads(open('config.json','r').read(-1))['token']
-s= Session(token)
-def chats():
-    res = s.method("messages.getConversations",{})['items']
-    return res[0:35-5]
 
-print(s.userget(1,'online_info'))
+
+def main(win:curses.window):
+    try:
+        while True:
+            k = win.getch()
+            if k == 6:
+                log('@$%^&U(OPOIUYTR^&*(IJHBGV))')
+            log(f"key {k} {curses.keyname(k)}")
+            win.addstr(1,1,k.__str__())
+            win.refresh
+    except Exception as d:
+        log(d)
+
+curses.update_lines_cols()
+curses.wrapper(main)
