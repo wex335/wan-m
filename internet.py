@@ -1,31 +1,34 @@
-import requests,json
+import requests, json
 
 
 def log(text):
-    open('a.log','a').write(f"\n{text}")
+    open("a.log", "a").write(f"\n{text}")
 
-class Session():
-    def __init__(self,token,version=5.131):
+
+class Session:
+    def __init__(self, token, version=5.131):
         self.version = version
         self.token = token
 
-    def method(self,mname,params:dict={}):
-        params.setdefault('access_token',[]).append(self.token)
-        params.setdefault('v',[]).append(self.version)
-        response = requests.get(f"https://api.vk.com/method/{mname}",params,timeout=10).content.decode('utf-8')
+    def method(self, mname, params: dict = {}):
+        params.setdefault("access_token", []).append(self.token)
+        params.setdefault("v", []).append(self.version)
+        response = requests.get(
+            f"https://api.vk.com/method/{mname}", params, timeout=10
+        ).content.decode("utf-8")
         log(response)
-        if 'response' in response:
-            return json.loads(response)['response']
+        if "response" in response:
+            return json.loads(response)["response"]
         return response
 
-    def userget(self,id:int=None,fields=None):
-        return self.method('users.get',{'user_ids':id,'fields':fields})[0]
+    def userget(self, id: int = None, fields=None):
+        return self.method("users.get", {"user_ids": id, "fields": fields})[0]
 
-    def groupget(self,id:int=None):
-        return self.method('groups.getById',{'group_ids':-id})[0]
+    def groupget(self, id: int = None):
+        return self.method("groups.getById", {"group_ids": -id})[0]
 
-    def messget(self,id:int):
-        return self.method('messages.getById',{'message_ids':[id]})['items'][0]
+    def messget(self, id: int):
+        return self.method("messages.getById", {"message_ids": [id]})["items"][0]
 
-    def ht(self,site,params={}):
-        return  json.loads(requests.get(f"{site}",params).content.decode('utf-8'))
+    def ht(self, site, params={}):
+        return json.loads(requests.get(f"{site}", params).content.decode("utf-8"))
