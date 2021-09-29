@@ -20,6 +20,7 @@ class dd(dict):
     __delattr__ = dict.__delitem__
 
 keydef = "key"
+chardef = "char"
 chstr=""
 wid = 143
 hid = 35
@@ -173,21 +174,22 @@ def dokey(key):
     if key == 6:
         q.put('changechat')
 
+
 def keyhandler(curs: curses.window):
-    # try:
     while True:
-        k = curs.getch()
+        k = curs.get_wch()
         log(k)
-        q.put((keydef, k))
-        # if k == 6:
-        #    changechat(curs)
-        # log(f"key {k}")
-        # curs.addstr(1,1,k.__str__())
-        # curs.refresh
+        q.put((keydef, ord(k)))
 
 
-# except Exception as d:
-# log(d.with_traceback())
+def charhandler(curs: curses.window):
+    while True:
+        k = curs.get_wch()
+        log(k)
+        q.put((chardef, k))
+
+
+
 def printupdate(lst, messconv):
     code = lst[0]
     if code == 4:
@@ -244,39 +246,42 @@ def main(conv: curses.window):
     messconv.refresh()
     threading.Thread(target=keyhandler, args=[c]).start()
     threading.Thread(target=lpmanager).start()
-    global keydef,tmp,chstr
+    global keydef,chardef,tmp,chstr
     while True:
         event = q.get()
         if(event[0] == 'lp'):
             printupdate(event[1],messconv)
         elif(event[0] == 'key'):
             log(f"{event[0]} {event[1]}")
-            if event[1] == 6:
+            if event[1] == 6:#^F
                 keydef = "keychat"
                 tmp = curses.newwin(hid-4, chwid - 3, 2, 2)
                 tmp.refresh()
+                drowchatsbysearch(chstr)
             dokey(event[1])
         elif(event[0] == 'keychat'):
             k = event[1]
-            char = str(curses.keyname(k)).split("'")[1]
-            if len(char) == 1:
-                chstr += char
-                tmp.clear()
-                tmp.addstr(0, 1, chstr)
-                tmp.refresh()
-                drowchatsbysearch(chstr)
-            elif k == 263 or k == 127:#backspase
+            if k == 263 or k == 127:#backspase
                 log("DELITE")
                 tmp.clear()
                 chstr = chstr[:-1]
                 tmp.addstr(0, 1, chstr)
+                tmp.addstr(0,1,chstr) 
                 tmp.refresh()
                 drowchatsbysearch(chstr)
-            if k == 10:#enter
+            elif k == 10:#enter
                 keydef = "key"
+                char = "char"
                 del tmp
                 gotochat(chstr)
                 drawChats(c)
-            
+            else:
+                char = chr(event[1])
+                chstr += char
+                log(chstr)
+                tmp.clear()
+                tmp.addstr(0,1,chstr) 
+                tmp.refresh()
+                drowchatsbysearch(chstr)
 curses.update_lines_cols()
 curses.wrapper(main)
