@@ -25,7 +25,7 @@ chstr=""
 wid = 143
 hid = 35
 chwid = 43
-me = dd(s.userget())
+me = s.userget()
 
 
 class Chat:
@@ -39,23 +39,25 @@ class Chat:
 
 
 def chats():
-    res = s.method("messages.getConversations", {})["items"]
+    res = s.method("messages.chats")
+    print(res)
+    res = res["items"]
     return res[0 : hid - 5]
 
 
 converstations = []
 chats = chats()
 for ch in chats:
-    pid = ch["conversation"]["peer"]["id"]
+    pid = ch["id"]
     converstations.append(Chat(pid, None, None))
 newconv = []
-ind = 1
+ind = 0
 
 
 def getname(id) -> str:
     if id > 0:
         user = s.userget(id)
-        return f"{user['first_name']} {user['last_name']}"
+        return f"{user['name']}"
     if id < 0:
         user = s.groupget(id)
         return f"{user['name']}"
@@ -69,50 +71,13 @@ def userinfo():
             users.append(c.peer)
         elif c.peer < 0:
             groups.append(-c.peer)
-    log(f"\n\n{users} \n\n")
-    convus = s.method(
-        "users.get", {"user_ids": ",".join(map(str, users)), "fields": "online_info"}
-    )
-    for uss in convus:
-        adv = ""
-        if uss["online_info"]["visible"]:
-            if uss["online_info"]["is_mobile"]:
-                adv += "📳 "
-            if uss["online_info"]["is_online"]:
-                adv += "Онлайн"
-            elif "last_seen" in uss["online_info"]:
-                mins = round(
-                    (datetime.now().timestamp() - int(uss["online_info"]["last_seen"]))
-                    // 60
-                )
-                if mins > 100:
-                    hours = round(mins // 60)
-                    if hours > 24:
-                        adv += f"{hours/24} дней назад"
-                    else:
-                        adv += f"{hours} часов назад"
-                else:
-                    adv += f"{mins} минут назад"
-        else:
-            adv += "хз, когда онлайн"
-        newconv.append(Chat(uss["id"], f"{uss['first_name']} {uss['last_name']}", adv))
-    chs = list(filter(lambda ch: ch["conversation"]["peer"]["id"] > 2000000000, chats))
-    for chd in chs:
-        name = chd["conversation"]["chat_settings"]["title"]
-        adv = f"{chd['conversation']['chat_settings']['members_count']} участников"
-        ch = Chat(chd["conversation"]["peer"]["id"], name, adv)
-        newconv.append(ch)
-    log("1234567865rfghjuytrfvgbnil;ukytfguhj" + groups.__str__())
-    grups = s.method("groups.getById", {"group_ids": groups, "fields": "online_info"})
-    for drr in grups:
-        name = drr["name"]
-        adv = "Сообщество"
-        newconv.append(Chat(-drr["id"], name, adv))
+    for user in users: 
+        uss = s.userget(user)
+        newconv.append(Chat(uss["id"], f"{uss['name']}", ""))
 
 
 def drawChats(window):
     window.border()
-    log(f"DrowChat for {len(newconv)}")
     for chat in range(len(newconv)):
         window.addstr(1 + chat, 1, newconv[chat].name[0:chwid-3])
     window.refresh()
@@ -131,16 +96,11 @@ def sticerinfo(id):
 
 
 def prmess(message, messconv: curses.window):
-    text = message.text
-    if (len(message.attachments) > 0) and (message.attachments[0]["type"] == "sticker"):
-        text = (
-            "Стикер"
-            + sticerinfo(message.attachments[0]["sticker"]["sticker_id"]).__str__()
-        )
-    if message.from_id == me.id:
+    text = message['text']
+    if message["from_id"] == me['id']:
         messconv.addstr(f"{text}\n")
-    elif message.from_id > 0:
-        messconv.addstr(getname(message.from_id) + f": {text}\n")
+    elif message["from_id"] > 0:
+        messconv.addstr(getname(message["from_id"]) + f": {text}\n")
     messconv.refresh()
 
 
@@ -156,11 +116,9 @@ def changechat(win):
     while k != 10 and k != 343:
         k = tmp.getch()
         char = curses.keyname(k).__str__().split("'")[1]
-        log(f"key {k} {char}")
         if len(char) == 1:
             chstr += char
         elif k == 263 or k == 127:
-            log("DELITE")
             chstr = chstr[:-1]
         tmp.clear()
         tmp.addstr(1, 1, chstr)
@@ -178,24 +136,21 @@ def dokey(key):
 def keyhandler(curs: curses.window):
     while True:
         k = curs.get_wch()
-        log(k)
         q.put((keydef, ord(k)))
 
 
 def charhandler(curs: curses.window):
     while True:
         k = curs.get_wch()
-        log(k)
         q.put((chardef, k))
 
 
 
 def printupdate(lst, messconv):
-    code = lst[0]
-    if code == 4:
-        message = dd(s.messget(lst[1]))
-        if message.peer_id == newconv[ind].peer:
-            log(message)
+    type = lst['type']
+    if type in [1,2]:
+        message = lst['object']
+        if newconv[ind].peer in [message['to_id'],message['from_id']]:
             prmess(message, messconv)
 
 
@@ -252,7 +207,6 @@ def main(conv: curses.window):
         if(event[0] == 'lp'):
             printupdate(event[1],messconv)
         elif(event[0] == 'key'):
-            log(f"{event[0]} {event[1]}")
             if event[1] == 6:#^F
                 keydef = "keychat"
                 tmp = curses.newwin(hid-4, chwid - 3, 2, 2)
@@ -262,7 +216,6 @@ def main(conv: curses.window):
         elif(event[0] == 'keychat'):
             k = event[1]
             if k == 263 or k == 127:#backspase
-                log("DELITE")
                 tmp.clear()
                 chstr = chstr[:-1]
                 tmp.addstr(0, 1, chstr)
@@ -278,7 +231,6 @@ def main(conv: curses.window):
             else:
                 char = chr(event[1])
                 chstr += char
-                log(chstr)
                 tmp.clear()
                 tmp.addstr(0,1,chstr) 
                 tmp.refresh()

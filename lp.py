@@ -1,22 +1,15 @@
+import time
+
+def log(text):
+    open("a.log", "a").write(f"\n{text}")
 class Lp:
     def __init__(self, session):
         self.sess = session
-        self.lp = session.method(
-            "messages.getLongPollServer", {"need_pts": 1, "lp_version": 3}
-        )
-        self.server = self.lp["server"]
-        self.key = self.lp["key"]
-        self.ts = self.lp["ts"]
-
     def start(self):
         while True:
-            s = self.sess.ht(
-                f"https://{self.server}?act=a_check",
-                {"key": self.key, "ts": self.ts, "wait": 25, "mode": 74, "version": 3},
-            )
-            if "failed" in s:
-                if s["failed"] != 1:
-                    continue
-            self.ts = s["ts"]
-            for up in s["updates"]:
-                yield up
+            s = self.sess.method("Pool.get")
+            if s['count']>0:
+                for up in s["items"]:
+                    yield up
+                self.sess.method("Pool.read")
+            time.sleep(1)

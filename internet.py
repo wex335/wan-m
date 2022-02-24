@@ -6,29 +6,23 @@ def log(text):
 
 
 class Session:
-    def __init__(self, token, version=5.131):
-        self.version = version
+    def __init__(self, token):
         self.token = token
 
     def method(self, mname, params: dict = {}):
-        params.setdefault("access_token", []).append(self.token)
-        params.setdefault("v", []).append(self.version)
+        params["accesstoken"] = self.token
         response = requests.get(
-            f"https://api.vk.com/method/{mname}", params, timeout=10
-        ).content.decode("utf-8")
-        log(response)
-        if "response" in response:
-            return json.loads(response)["response"]
-        return response
+            f"http://localhost:5000/method/{mname}", params
+        )
+        log(response.text)
+        
+        return response.json()
 
     def userget(self, id: int = None, fields=None):
-        return self.method("users.get", {"user_ids": id, "fields": fields})[0]
-
-    def groupget(self, id: int = None):
-        return self.method("groups.getById", {"group_ids": -id})[0]
+        return self.method("users.get", {"id": id})
 
     def messget(self, id: int):
-        return self.method("messages.getById", {"message_ids": [id]})["items"][0]
+        return self.method("messages.get", {"id": id})
 
     def ht(self, site, params={}):
         return json.loads(requests.get(f"{site}", params).content.decode("utf-8"))
